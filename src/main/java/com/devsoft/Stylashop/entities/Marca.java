@@ -1,4 +1,4 @@
-package entities;
+package com.devsoft.Stylashop.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,8 +14,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "categorias", schema = "public", catalog = "StylaShop")
-public class Categoria implements Serializable {
+@Table(name = "marca", schema = "public", catalog = "StylaShop")
+public class Marca implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     @Id

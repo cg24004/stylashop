@@ -1,7 +1,5 @@
-package entities;
+package com.devsoft.Stylashop.entities;
 
-import entities.Categoria;
-import entities.Marca;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

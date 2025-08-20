@@ -1,4 +1,4 @@
-package entities;
+package com.devsoft.Stylashop.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
