@@ -26,4 +26,6 @@ public class Cliente implements Serializable {
     private String telefono;
     @Column(name = "email", nullable = true, length = 50)
     private String email;
+    @Column(name = "tipo_cliente", nullable = false, length = 1)
+    private String tipoCliente;
 }
