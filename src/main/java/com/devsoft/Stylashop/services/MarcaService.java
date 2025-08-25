@@ -43,7 +43,7 @@ public class MarcaService implements IMarcaService{
         return convertToDTO(marcaRepository.save(marcaNueva));
     }
 
-    // Este método busca una categoría por su nombre y devuelve un CategoriaDTO
+    // Este método busca una marca por su nombre y devuelve un MarcaDTO
     @Override
     public MarcaDTO findByNombre(String nombre) {
         Marca marca = marcaRepository.findByNombre(nombre);
@@ -56,7 +56,7 @@ public class MarcaService implements IMarcaService{
         marcaRepository.deleteById(id);
     }
 
-    // Método privado para convertir una entidad Categoria a CategoriaDTO
+    // Método privado para convertir una entidad Marca a MarcaDTO
     private MarcaDTO convertToDTO(Marca marca) {
         return new MarcaDTO(marca.getId(),marca.getNombre());
     }
