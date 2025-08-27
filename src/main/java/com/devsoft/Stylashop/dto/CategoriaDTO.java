@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+// Esta clase es un DTO (Data Transfer Object) que representa una categoría
+// y permite transferir datos entra el controlador y el servicio
 public class CategoriaDTO {
-    private Long Id;
+    private Long id;
     private String nombre;
 }

@@ -1,6 +1,5 @@
 package com.devsoft.Stylashop.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,19 +23,16 @@ public class DetalleVenta implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "cantidad", nullable = false)
-    private int cantidad;
-    @Column(name = "precio", nullable = false, precision = 8, scale = 2)
+    private Integer cantidad;
+    @Column(name = "precio", precision = 8, scale = 2)
     private BigDecimal precio;
-    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
+    @Column(name = "subtotal", precision = 10, scale = 2)
     private BigDecimal subtotal;
-
-    //relaciones con Orden y Menu
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", referencedColumnName = "id", nullable = false)
-    private Producto producto;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "venta_id", referencedColumnName = "id", nullable = false)
-    @JsonBackReference //para evitar cargar la consulta de la venta
+    @JoinColumn(name = "venta_id")
     private Venta venta;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
 }
+

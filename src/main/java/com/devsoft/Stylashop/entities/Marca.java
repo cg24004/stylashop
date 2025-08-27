@@ -14,7 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "marca", schema = "public", catalog = "StylaShop")
+@Table(name = "marcas", schema = "public", catalog = "StylaShop")
 public class Marca implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -24,3 +24,4 @@ public class Marca implements Serializable {
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 }
+

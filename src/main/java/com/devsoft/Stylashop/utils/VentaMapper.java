@@ -1,76 +1,64 @@
 package com.devsoft.Stylashop.utils;
 
-import com.devsoft.Stylashop.dto.*;
+import com.devsoft.Stylashop.dto.DetalleVentaDTO;
+import com.devsoft.Stylashop.dto.VentaDTO;
+import com.devsoft.Stylashop.entities.DetalleVenta;
+import com.devsoft.Stylashop.entities.Producto;
+import com.devsoft.Stylashop.entities.Usuario;
 import com.devsoft.Stylashop.entities.Venta;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class VentaMapper {
-
     public static VentaDTO toDTO(Venta venta) {
         if (venta == null) return null;
+        List<DetalleVentaDTO> detalles = venta.getDetalles() != null ? venta.getDetalles().stream()
+                .map(VentaMapper::detalleToDTO)
+                .collect(Collectors.toList()) : null;
+        return VentaDTO.builder()
+                .id(venta.getId())
+                .fecha(venta.getFecha())
+                .hora(venta.getHora())
+                .total(venta.getTotal())
+                .usuarioId(venta.getUsuario() != null ? venta.getUsuario().getId() : null)
+                .detalles(detalles)
+                .build();
+    }
 
-        VentaDTO dto = new VentaDTO();
-        dto.setId(venta.getId());
-        dto.setFecha(venta.getFecha());
-        dto.setHora(venta.getHora());
-        dto.setTotal(venta.getTotal());
+    public static Venta toEntity(VentaDTO dto, Usuario usuario, List<DetalleVenta> detalles) {
+        if (dto == null) return null;
+        Venta venta = new Venta();
+        venta.setId(dto.getId());
+        venta.setFecha(dto.getFecha());
+        venta.setHora(dto.getHora());
+        venta.setTotal(dto.getTotal());
+        venta.setUsuario(usuario);
+        venta.setDetalles(detalles);
+        return venta;
+    }
 
-        // Cliente
-        dto.setClienteDTO(new ClienteDTO(
-                venta.getCliente().getId(),
-                venta.getCliente().getNombre(),
-                venta.getCliente().getDireccion(),
-                venta.getCliente().getTelefono(),
-                venta.getCliente().getEmail(),
-                venta.getCliente().getTipoCliente()
-        ));
+    public static DetalleVentaDTO detalleToDTO(DetalleVenta det) {
+        if (det == null) return null;
+        return DetalleVentaDTO.builder()
+                .id(det.getId())
+                .cantidad(det.getCantidad())
+                .precio(det.getPrecio())
+                .subtotal(det.getSubtotal())
+                .productoId(det.getProducto() != null ? det.getProducto().getId() : null)
+                .build();
+    }
 
-        // Usuario
-        dto.setUsuarioDTO(new UsuarioDTO(
-                venta.getUsuario().getId(),
-                venta.getUsuario().getNombre(),
-                venta.getUsuario().getUsername(),
-                venta.getUsuario().isActivo(),
-                new RoleDTO(
-                        venta.getUsuario().getRole().getId(),
-                        venta.getUsuario().getRole().getNombre()
-                )
-        ));
-
-        // Detalle de la venta
-        if (venta.getDetalleVenta() != null) {
-            dto.setDetalle(venta.getDetalleVenta().stream().map(d -> {
-                DetalleVentaDTO detalleDTO = new DetalleVentaDTO();
-                detalleDTO.setId(d.getId());
-                detalleDTO.setCantidad(d.getCantidad());
-                detalleDTO.setPrecio(d.getPrecio());
-                detalleDTO.setSubtotal(
-                        BigDecimal.valueOf(d.getCantidad())
-                                .multiply(d.getPrecio())
-                                .setScale(2, RoundingMode.HALF_UP)
-                );
-                detalleDTO.setProductoDTO(new ProductoDTO(
-                        d.getProducto().getId(),
-                        d.getProducto().getNombre(),
-                        d.getProducto().getDescripcion(),
-                        d.getProducto().getPrecioUnitario(),
-                        d.getProducto().getUrlImagen(),
-                        new CategoriaDTO(
-                                d.getProducto().getCategoria().getId(),
-                                d.getProducto().getCategoria().getNombre()
-                        ),
-                        new MarcaDTO(
-                                d.getProducto().getMarca().getId(),
-                                d.getProducto().getMarca().getNombre()
-                        )
-                ));
-                return detalleDTO;
-            }).collect(Collectors.toList()));
-        }
-
-        return dto;
+    public static DetalleVenta detalleToEntity(DetalleVentaDTO dto, Venta venta, Producto producto) {
+        if (dto == null) return null;
+        DetalleVenta det = new DetalleVenta();
+        det.setId(dto.getId());
+        det.setCantidad(dto.getCantidad());
+        det.setPrecio(dto.getPrecio());
+        det.setSubtotal(dto.getSubtotal());
+        det.setVenta(venta);
+        det.setProducto(producto);
+        return det;
     }
 }
+

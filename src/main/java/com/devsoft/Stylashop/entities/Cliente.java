@@ -1,7 +1,10 @@
 package com.devsoft.Stylashop.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -18,14 +21,12 @@ public class Cliente implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "nombre", nullable = false, length = 50)
+    @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
-    @Column(name = "direccion", nullable = false, length = 150)
-    private String direccion;
-    @Column(name = "telefono", nullable = true, length = 12)
-    private String telefono;
-    @Column(name = "email", nullable = true, length = 50)
+    @Column(name = "email", nullable = true, length = 100)
     private String email;
-    @Column(name = "tipo_cliente", nullable = false, length = 1)
+    @Column(name = "telefono", nullable = true, length = 10)
+    private String telefono;
+    @Column(name = "tipo_cliente", nullable = false, length = 100)
     private String tipoCliente;
 }

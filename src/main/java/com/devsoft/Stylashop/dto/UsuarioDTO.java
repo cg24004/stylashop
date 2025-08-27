@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioDTO {
     private Long id;
-    private String nombre;
-    private String userName;
-    private boolean activo;
-    private RoleDTO roleDTO;
+    private String correo;
+    private String password;
+    private Long roleId;
 }

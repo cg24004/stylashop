@@ -4,9 +4,12 @@ import com.devsoft.Stylashop.entities.Categoria;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
-    List<Categoria> findByNombreContainingIgnoreCase(String nombre);
+
+    //Este método servirá para no insertar registros duplicados
+    //Optional<Categoria> findByNombreIgnoreCase(String nombre);
+
+    // Método para buscar una categoría por su nombre almacenado en la base de datos a traves de un DTO
+    Categoria findByNombre(String nombre);
 }

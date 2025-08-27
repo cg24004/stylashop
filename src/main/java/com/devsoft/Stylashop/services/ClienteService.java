@@ -35,7 +35,7 @@ public class ClienteService implements IClienteService {
 
     @Override
     @Transactional(readOnly = true)
-    public ClienteDTO finByNombre(String nombre) {
+    public ClienteDTO findByNombre(String nombre) {
         Cliente cl = clienteRepository.findByNombre(nombre);
         if (cl == null) return null;
         return convertToDTO(cl);
@@ -44,9 +44,8 @@ public class ClienteService implements IClienteService {
     private ClienteDTO convertToDTO(Cliente cl) {
         return new ClienteDTO(cl.getId(),
                 cl.getNombre(),
-                cl.getDireccion(),
-                cl.getTelefono(),
                 cl.getEmail(),
-                cl.getTipoCliente();
+                cl.getTelefono(),
+                cl.getTipoCliente());
     }
 }

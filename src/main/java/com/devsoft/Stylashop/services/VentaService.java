@@ -2,106 +2,101 @@ package com.devsoft.Stylashop.services;
 
 import com.devsoft.Stylashop.dto.DetalleVentaDTO;
 import com.devsoft.Stylashop.dto.VentaDTO;
-import com.devsoft.Stylashop.entities.*;
-import com.devsoft.Stylashop.interfaces.IVentaService;
-import com.devsoft.Stylashop.repository.*;
-import com.devsoft.Stylashop.utils.VentaMapper;
+import com.devsoft.Stylashop.entities.DetalleVenta;
+import com.devsoft.Stylashop.entities.Producto;
+import com.devsoft.Stylashop.entities.Usuario;
+import com.devsoft.Stylashop.entities.Venta;
+import com.devsoft.Stylashop.repository.DetalleVentaRepository;
+import com.devsoft.Stylashop.repository.ProductoRepository;
+import com.devsoft.Stylashop.repository.UserRepository;
+import com.devsoft.Stylashop.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-public class VentaService implements IVentaService {
-
+public class VentaService {
     @Autowired
     private VentaRepository ventaRepository;
-
     @Autowired
-    private ClienteRepository clienteRepository;
-
+    private UserRepository userRepository;
     @Autowired
-    private UsuarioRepository usuarioRepository;
-
+    private DetalleVentaRepository detalleVentaRepository;
     @Autowired
     private ProductoRepository productoRepository;
 
-    @Override
     @Transactional(readOnly = true)
     public List<VentaDTO> findAll() {
-        return ventaRepository.findAll()
-                .stream().map(VentaMapper::toDTO).toList();
+        return ventaRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    @Override
     @Transactional(readOnly = true)
     public VentaDTO findById(Long id) {
-        return ventaRepository.findById(id)
-                .map(VentaMapper::toDTO)
-                .orElse(null);
+        Venta venta = ventaRepository.findById(id).orElse(null);
+        if (venta == null) return null;
+        return convertToDTO(venta);
     }
 
-    @Override
     @Transactional
-    public VentaDTO registerOrUpdate(VentaDTO ventaDTO) {
-        // Validamos las referencias requeridas
-        Optional<Cliente> clienteOpt = clienteRepository.findById(ventaDTO.getClienteDTO().getId());
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(ventaDTO.getUsuarioDTO().getId());
-
-        if (clienteOpt.isEmpty() || usuarioOpt.isEmpty()
-                || ventaDTO.getDetalle() == null || ventaDTO.getDetalle().isEmpty()) {
-            return null; // se gestiona en el controlador
+    public VentaDTO save(VentaDTO dto) {
+        Venta venta = new Venta();
+        if (dto.getId() != null) venta.setId(dto.getId());
+        venta.setFecha(dto.getFecha());
+        venta.setHora(dto.getHora());
+        venta.setTotal(dto.getTotal());
+        Usuario usuario = userRepository.findById(dto.getUsuarioId()).orElse(null);
+        venta.setUsuario(usuario);
+        List<DetalleVenta> detalles = new ArrayList<>();
+        if (dto.getDetalles() != null) {
+            for (DetalleVentaDTO detDto : dto.getDetalles()) {
+                DetalleVenta det = new DetalleVenta();
+                if (detDto.getId() != null) det.setId(detDto.getId());
+                det.setCantidad(detDto.getCantidad());
+                det.setPrecio(detDto.getPrecio());
+                det.setSubtotal(detDto.getSubtotal());
+                Producto producto = productoRepository.findById(detDto.getProductoId()).orElse(null);
+                det.setProducto(producto);
+                det.setVenta(venta);
+                detalles.add(det);
+            }
         }
-
-        Venta venta;
-        if (ventaDTO.getId() == null) {
-            // Nueva venta
-            venta = new Venta();
-            venta.setFecha(LocalDate.now());
-            venta.setHora(LocalTime.now());
-            venta.setDetalleVenta(new ArrayList<>());
-        } else {
-            // Actualización de una venta existente
-            Optional<Venta> ventaOpt = ventaRepository.findById(ventaDTO.getId());
-            if (ventaOpt.isEmpty()) return null;
-            venta = ventaOpt.get();
-            // Limpiamos detalle anterior para reemplazarlo
-            venta.getDetalleVenta().clear();
-        }
-
-        // Seteamos referencias y total
-        venta.setCliente(clienteOpt.get());
-        venta.setUsuario(usuarioOpt.get());
-        venta.setTotal(ventaDTO.getTotal());
-
-        // Procesamos detalle de la venta
-        for (DetalleVentaDTO detalleDTO : ventaDTO.getDetalle()) {
-            Optional<Producto> productoOpt = productoRepository.findById(detalleDTO.getProductoDTO().getId());
-            if (productoOpt.isEmpty()) return null;
-            Producto producto = productoOpt.get();
-
-            DetalleVenta detalleVenta = new DetalleVenta();
-            detalleVenta.setCantidad(detalleDTO.getCantidad());
-            detalleVenta.setPrecio(detalleDTO.getPrecio());
-            detalleVenta.setSubtotal(detalleDTO.getSubtotal());
-            detalleVenta.setProducto(producto);
-            detalleVenta.setVenta(venta);
-
-            venta.getDetalleVenta().add(detalleVenta);
-        }
-
-        Venta ventaPersisted = ventaRepository.save(venta);
-        return VentaMapper.toDTO(ventaPersisted);
+        venta.setDetalles(detalles);
+        return convertToDTO(ventaRepository.save(venta));
     }
 
-    @Override
     @Transactional
     public void delete(Long id) {
         ventaRepository.deleteById(id);
     }
+
+    private VentaDTO convertToDTO(Venta venta) {
+        List<DetalleVentaDTO> detalles = venta.getDetalles() != null ? venta.getDetalles().stream()
+                .map(this::convertDetalleToDTO)
+                .collect(Collectors.toList()) : null;
+        return new VentaDTO(
+                venta.getId(),
+                venta.getFecha(),
+                venta.getHora(),
+                venta.getTotal(),
+                venta.getUsuario() != null ? venta.getUsuario().getId() : null,
+                detalles
+        );
+    }
+
+    private DetalleVentaDTO convertDetalleToDTO(DetalleVenta det) {
+        return new DetalleVentaDTO(
+                det.getId(),
+                det.getCantidad(),
+                det.getPrecio(),
+                det.getSubtotal(),
+                det.getProducto() != null ? det.getProducto().getId() : null
+        );
+    }
 }
+
