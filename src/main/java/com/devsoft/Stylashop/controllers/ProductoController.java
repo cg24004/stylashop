@@ -1,96 +1,91 @@
 package com.devsoft.Stylashop.controllers;
 
 import com.devsoft.Stylashop.dto.ProductoDTO;
-import com.devsoft.Stylashop.interfaces.IProductoService;
+import com.devsoft.Stylashop.services.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api/productos")
+@RequestMapping("/api")
 public class ProductoController {
-
     @Autowired
-    private IProductoService productoService;
+    private ProductoService productoService;
 
-    @GetMapping
+    @GetMapping("/productos")
     public ResponseEntity<?> getAll() {
-        return ResponseEntity.ok(productoService.findAll());
+        List<ProductoDTO> productos = productoService.findAll();
+        return ResponseEntity.ok(productos);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/productos/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
-        Map<String, Object> res = new HashMap<>();
+        ProductoDTO producto = productoService.findById(id);
+        if (producto == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "El producto con ID: " + id + " no existe");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(producto);
+    }
+
+    @PostMapping("/productos")
+    public ResponseEntity<?> save(@RequestBody ProductoDTO dto) {
         try {
-            ProductoDTO dto = productoService.findById(id);
-            if (dto == null) {
-                res.put("message", "El producto con ID " + id + " no existe");
-                return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(dto, HttpStatus.OK);
+            ProductoDTO persisted = productoService.save(dto);
+            return new ResponseEntity<>(persisted, HttpStatus.CREATED);
         } catch (DataAccessException e) {
-            res.put("message", "Error al consultar el producto");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al guardar el producto");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PostMapping
-    public ResponseEntity<?> create(@RequestBody ProductoDTO dto) {
-        Map<String, Object> res = new HashMap<>();
-        try {
-            ProductoDTO created = productoService.registerOrUpdate(dto);
-            res.put("message", "Producto creado con éxito");
-            res.put("producto", created);
-            return new ResponseEntity<>(res, HttpStatus.CREATED);
-        } catch (DataAccessException e) {
-            res.put("message", "Error al crear el producto");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping("/{id}")
+    @PutMapping("/productos/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ProductoDTO dto) {
-        Map<String, Object> res = new HashMap<>();
-        ProductoDTO current = productoService.findById(id);
-        if (current == null) {
-            res.put("message", "No se puede editar: el producto con ID " + id + " no existe");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        ProductoDTO actual = productoService.findById(id);
+        if (actual == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "No existe un producto con el ID: " + id);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
+        // Asegura que el id se establezca aunque no venga en el body
+        dto.setId(id);
         try {
-            dto.setId(id);
-            ProductoDTO updated = productoService.registerOrUpdate(dto);
-            res.put("message", "Producto actualizado con éxito");
-            res.put("producto", updated);
-            return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+            ProductoDTO updated = productoService.save(dto);
+            return ResponseEntity.ok(updated);
         } catch (DataAccessException e) {
-            res.put("message", "Error al actualizar el producto");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al actualizar el producto");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/productos/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        Map<String, Object> res = new HashMap<>();
-        ProductoDTO current = productoService.findById(id);
-        if (current == null) {
-            res.put("message", "No existe el producto con ID " + id);
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        ProductoDTO actual = productoService.findById(id);
+        if (actual == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "No existe un producto con el ID: " + id);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
         try {
             productoService.delete(id);
-            res.put("message", "Producto eliminado con éxito");
-            return new ResponseEntity<>(res, HttpStatus.OK);
+            return ResponseEntity.ok().build();
         } catch (DataAccessException e) {
-            res.put("message", "Error al eliminar el producto");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al eliminar el producto");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

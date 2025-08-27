@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,8 +19,7 @@ public class VentaDTO {
     private LocalDate fecha;
     private LocalTime hora;
     private BigDecimal total;
-    private ClienteDTO clienteDTO;
-    private  UsuarioDTO usuarioDTO;
-    //colección para el detalle de la Venta
-    private List<DetalleVentaDTO> detalle;
+    private Long usuarioId;
+    private List<DetalleVentaDTO> detalles;
 }
+

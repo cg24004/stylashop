@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class MarcaDTO {
-    private Long Id;
+    private Long id;
     private String nombre;
 }
+

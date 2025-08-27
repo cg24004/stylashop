@@ -1,6 +1,5 @@
 package com.devsoft.Stylashop.entities;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,21 +29,12 @@ public class Venta implements Serializable {
     private LocalDate fecha;
     @Column(name = "hora", nullable = false)
     private LocalTime hora;
-
-    @Column(name = "total", nullable = false, precision = 10, scale = 2)
+    @Column(name = "total", precision = 10, scale = 2)
     private BigDecimal total;
-
-    //relaciones con Cliente y Usuario
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", referencedColumnName = "id", nullable = false)
-    private Cliente cliente;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
-
-    //relacion OneToMany con DetalleVenta
-    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference //para evitar la recursividad infinita al serializar
-    private List<DetalleVenta> detalleVenta;
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetalleVenta> detalles;
 }
+

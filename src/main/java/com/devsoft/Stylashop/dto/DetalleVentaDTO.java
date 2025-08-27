@@ -6,14 +6,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class DetalleVentaDTO {
     private Long id;
-    private ProductoDTO productoDTO;
-    private  Integer cantidad;
+    private Integer cantidad;
     private BigDecimal precio;
     private BigDecimal subtotal;
+    private Long productoId;
 }
+

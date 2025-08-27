@@ -1,96 +1,91 @@
 package com.devsoft.Stylashop.controllers;
 
 import com.devsoft.Stylashop.dto.MarcaDTO;
-import com.devsoft.Stylashop.interfaces.IMarcaService;
+import com.devsoft.Stylashop.services.MarcaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api/marcas")
+@RequestMapping("/api")
 public class MarcaController {
-
     @Autowired
-    private IMarcaService marcaService;
+    private MarcaService marcaService;
 
-    @GetMapping
+    @GetMapping("/marcas")
     public ResponseEntity<?> getAll() {
-        return ResponseEntity.ok(marcaService.findAll());
+        List<MarcaDTO> marcas = marcaService.findAll();
+        return ResponseEntity.ok(marcas);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/marcas/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
-        Map<String, Object> res = new HashMap<>();
+        MarcaDTO marca = marcaService.findById(id);
+        if (marca == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "La marca con ID: " + id + " no existe");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(marca);
+    }
+
+    @PostMapping("/marcas")
+    public ResponseEntity<?> save(@RequestBody MarcaDTO dto) {
         try {
-            MarcaDTO dto = marcaService.findById(id);
-            if (dto == null) {
-                res.put("message", "La marca con ID " + id + " no existe");
-                return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(dto, HttpStatus.OK);
+            MarcaDTO persisted = marcaService.save(dto);
+            return new ResponseEntity<>(persisted, HttpStatus.CREATED);
         } catch (DataAccessException e) {
-            res.put("message", "Error al consultar la marca");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al guardar la marca");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PostMapping
-    public ResponseEntity<?> create(@RequestBody MarcaDTO dto) {
-        Map<String, Object> res = new HashMap<>();
-        try {
-            MarcaDTO created = marcaService.registerOrUpdate(dto);
-            res.put("message", "Marca creada con éxito");
-            res.put("marca", created);
-            return new ResponseEntity<>(res, HttpStatus.CREATED);
-        } catch (DataAccessException e) {
-            res.put("message", "Error al crear la marca");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping("/{id}")
+    @PutMapping("/marcas/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody MarcaDTO dto) {
-        Map<String, Object> res = new HashMap<>();
-        MarcaDTO current = marcaService.findById(id);
-        if (current == null) {
-            res.put("message", "No se puede editar: la marca con ID " + id + " no existe");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        MarcaDTO actual = marcaService.findById(id);
+        if (actual == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "No existe una marca con el ID: " + id);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
+        dto.setId(id);
         try {
-            dto.setId(id);
-            MarcaDTO updated = marcaService.registerOrUpdate(dto);
-            res.put("message", "Marca actualizada con éxito");
-            res.put("marca", updated);
-            return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+            MarcaDTO updated = marcaService.save(dto);
+            return ResponseEntity.ok(updated);
         } catch (DataAccessException e) {
-            res.put("message", "Error al actualizar la marca");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al actualizar la marca");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/marcas/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        Map<String, Object> res = new HashMap<>();
-        MarcaDTO current = marcaService.findById(id);
-        if (current == null) {
-            res.put("message", "No existe la marca con ID " + id);
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        MarcaDTO actual = marcaService.findById(id);
+        if (actual == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "No existe una marca con el ID: " + id);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
         try {
             marcaService.delete(id);
-            res.put("message", "Marca eliminada con éxito");
-            return new ResponseEntity<>(res, HttpStatus.OK);
+            return ResponseEntity.ok().build();
         } catch (DataAccessException e) {
-            res.put("message", "Error al eliminar la marca");
-            res.put("error", e.getMessage());
-            return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error al eliminar la marca");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
+
