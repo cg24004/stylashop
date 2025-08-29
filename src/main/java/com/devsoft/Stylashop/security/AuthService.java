@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
                     .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
             //creamos una instancia (objeto) de Usuario
             Usuario user = new Usuario();
-            user.setCorreo(registerDTO.getCorreo());
             user.setUsername(registerDTO.getUsername());
             user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
             user.setRole(role);

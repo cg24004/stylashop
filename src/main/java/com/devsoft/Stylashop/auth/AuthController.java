@@ -34,10 +34,6 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterDTO dto){
         Map<String, Object> response = new HashMap<>();
         try{
-            if(userRepository.existsByCorreo(dto.getCorreo())){
-                response.put("message","Ya existe un usuario con este correo");
-                return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
-            }
             if(userRepository.existsByUsername(dto.getUsername())){
                 response.put("message","Ya existe un usuario con este nombre de usuario");
                 return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
