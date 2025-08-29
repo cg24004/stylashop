@@ -28,13 +28,14 @@ import org.springframework.stereotype.Service;
             //creamos una instancia (objeto) de Usuario
             Usuario user = new Usuario();
             user.setCorreo(registerDTO.getCorreo());
+            user.setUsername(registerDTO.getUsername());
             user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
             user.setRole(role);
             //guardamos el usuario
             userRepository.save(user);
             String token = jwtService.generateToken(
                     User.builder()
-                            .username(user.getCorreo())
+                            .username(user.getUsername())
                             .password(user.getPassword())
                             .build()
             );
@@ -43,14 +44,14 @@ import org.springframework.stereotype.Service;
 
         //metodo para autenticacion de usuario
         public JwtResponse authenticate(LoginDTO dto){
-            Usuario user = userRepository.findByCorreo(dto.getCorreo())
+            Usuario user = userRepository.findByUsername(dto.getUsername())
                     .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
             if(!passwordEncoder.matches(dto.getPassword(), user.getPassword())){
                 throw  new RuntimeException("Credenciales inválidas");
             }
             String token = jwtService.generateToken(
                     User.builder()
-                            .username(user.getCorreo())
+                            .username(user.getUsername())
                             .password(user.getPassword())
                             .roles(user.getRole().getNombre())
                             .build()
