@@ -25,6 +25,8 @@ public class Usuario implements Serializable {
     private String correo;
     @Column(name = "password", nullable = false, length = 200)
     private String password;
+    @Column(name = "username", nullable = false, unique = true, length = 50)
+    private String username;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false, referencedColumnName = "id")
     private Role role;

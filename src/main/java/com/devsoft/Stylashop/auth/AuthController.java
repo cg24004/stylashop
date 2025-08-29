@@ -38,6 +38,10 @@ public class AuthController {
                 response.put("message","Ya existe un usuario con este correo");
                 return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
             }
+            if(userRepository.existsByUsername(dto.getUsername())){
+                response.put("message","Ya existe un usuario con este nombre de usuario");
+                return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+            }
             authService.register(dto);
             response.put("message","Usuario registrado correctamente...!");
             return new ResponseEntity<>(response, HttpStatus.CREATED);

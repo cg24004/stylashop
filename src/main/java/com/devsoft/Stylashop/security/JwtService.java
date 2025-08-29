@@ -33,12 +33,12 @@ public class JwtService implements UserDetailsService {
     private long jwtExpiration;
 
     @Override
-    public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
-        Usuario user = userRepository.findByCorreo(correo)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Usuario user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("Usuario no encontrado: "+correo));
+                        new UsernameNotFoundException("Usuario no encontrado: "+username));
         return User.builder()
-                .username(user.getCorreo())
+                .username(user.getUsername())
                 .password(user.getPassword())
                 .roles(user.getRole().getNombre())
                 .build();
@@ -46,7 +46,7 @@ public class JwtService implements UserDetailsService {
 
     public String generateToken(UserDetails userDetails){
         //obtenemos el usuario para agregar información extra al token
-        Usuario user = userRepository.findByCorreo(userDetails.getUsername())
+        Usuario user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " +
                         userDetails.getUsername()));
         //creamos un HashMap para agregar informacion extra
