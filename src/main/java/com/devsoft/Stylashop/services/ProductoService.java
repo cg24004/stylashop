@@ -12,8 +12,12 @@ import com.devsoft.Stylashop.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +28,9 @@ public class ProductoService {
     private MarcaRepository marcaRepository;
     @Autowired
     private CategoriaRepository categoriaRepository;
+
+    // Cambia esta ruta por la que usas en tu servidor
+    private final String UPLOAD_DIR = "C:/ruta/a/tu/carpeta/uploads/productos/";
 
     @Transactional(readOnly = true)
     public List<ProductoDTO> findAll() {
@@ -47,13 +54,27 @@ public class ProductoService {
     }
 
     @Transactional
-    public ProductoDTO save(ProductoDTO dto) {
+    public ProductoDTO save(ProductoDTO dto, MultipartFile imagen) {
         Producto producto = new Producto();
         if (dto.getId() != null) producto.setId(dto.getId());
         producto.setNombre(dto.getNombre());
         producto.setDescripcion(dto.getDescripcion());
         producto.setPrecioUnitario(dto.getPrecioUnitario());
-        producto.setImagenUrl(dto.getImagenUrl());
+
+        // Manejo de imagen
+        if (imagen != null && !imagen.isEmpty()) {
+            String nombreArchivo = UUID.randomUUID() + "_" + imagen.getOriginalFilename();
+            try {
+                File uploadDir = new File(UPLOAD_DIR);
+                if (!uploadDir.exists()) uploadDir.mkdirs();
+                imagen.transferTo(new File(UPLOAD_DIR + nombreArchivo));
+                producto.setImagenUrl(nombreArchivo);
+            } catch (IOException e) {
+                throw new RuntimeException("Error al guardar la imagen", e);
+            }
+        } else {
+            producto.setImagenUrl(dto.getImagenUrl());
+        }
 
         Marca marca = null;
         if (dto.getMarca() != null && dto.getMarca().getId() != null) {
