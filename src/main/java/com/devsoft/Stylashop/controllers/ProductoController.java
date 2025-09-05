@@ -7,6 +7,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,10 +37,12 @@ public class ProductoController {
         return ResponseEntity.ok(producto);
     }
 
-    @PostMapping("/productos")
-    public ResponseEntity<?> save(@RequestBody ProductoDTO dto) {
+    @PostMapping(value = "/productos", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> save(
+            @RequestPart("dto") ProductoDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         try {
-            ProductoDTO persisted = productoService.save(dto);
+            ProductoDTO persisted = productoService.save(dto, imagen);
             return new ResponseEntity<>(persisted, HttpStatus.CREATED);
         } catch (DataAccessException e) {
             Map<String, Object> response = new HashMap<>();
@@ -49,18 +52,20 @@ public class ProductoController {
         }
     }
 
-    @PutMapping("/productos/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ProductoDTO dto) {
+    @PutMapping(value = "/productos/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestPart("dto") ProductoDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         ProductoDTO actual = productoService.findById(id);
         if (actual == null) {
             Map<String, Object> response = new HashMap<>();
             response.put("message", "No existe un producto con el ID: " + id);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        // Asegura que el id se establezca aunque no venga en el body
         dto.setId(id);
         try {
-            ProductoDTO updated = productoService.save(dto);
+            ProductoDTO updated = productoService.save(dto, imagen);
             return ResponseEntity.ok(updated);
         } catch (DataAccessException e) {
             Map<String, Object> response = new HashMap<>();
