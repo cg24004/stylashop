@@ -9,116 +9,183 @@ import com.devsoft.Stylashop.entities.Producto;
 import com.devsoft.Stylashop.repository.CategoriaRepository;
 import com.devsoft.Stylashop.repository.MarcaRepository;
 import com.devsoft.Stylashop.repository.ProductoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProductoService {
-    @Autowired
-    private ProductoRepository productoRepository;
-    @Autowired
-    private MarcaRepository marcaRepository;
-    @Autowired
-    private CategoriaRepository categoriaRepository;
 
-    // Cambia esta ruta por la que usas en tu servidor
-    private final String UPLOAD_DIR = "C:/ruta/a/tu/carpeta/uploads/productos/";
+    private final ProductoRepository productoRepository;
+    private final MarcaRepository marcaRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    @Transactional(readOnly = true)
-    public List<ProductoDTO> findAll() {
-        return productoRepository.findAll().stream()
-                .map(this::convertToDTO)
+    // Ruta donde se guardan las imágenes (ajústala si es necesario)
+    private final String UPLOAD_DIR = "uploads/productos/";
+
+    /* =================== Helpers de archivo =================== */
+
+    private Path getUploadRoot() {
+        return Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+    }
+
+    private String saveFile(MultipartFile file) {
+        try {
+            if (file != null && !file.isEmpty()) {
+                Path uploadPath = getUploadRoot();
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                String original = file.getOriginalFilename();
+                String cleanName = (original == null ? "file" : original).replaceAll("\\s+", "_");
+                String fileName = System.currentTimeMillis() + "_" + cleanName;
+
+                Path target = uploadPath.resolve(fileName).normalize();
+                if (!target.startsWith(uploadPath)) {
+                    throw new SecurityException("Ruta de archivo inválida");
+                }
+
+                Files.copy(file.getInputStream(), target);
+                return fileName;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void deleteFileSafe(String fileName) {
+        try {
+            if (fileName == null || fileName.isBlank()) return;
+            Path uploadPath = getUploadRoot();
+            Path target = uploadPath.resolve(fileName).normalize();
+            if (target.startsWith(uploadPath)) {
+                Files.deleteIfExists(target);
+            }
+        } catch (Exception e) {
+            // Loguea pero no interrumpas la operación
+            e.printStackTrace();
+        }
+    }
+
+    /* =================== Mappers =================== */
+
+    private ProductoDTO mapToDTO(Producto p) {
+        MarcaDTO marcaDTO = null;
+        if (p.getMarca() != null) {
+            marcaDTO = new MarcaDTO(p.getMarca().getId(), p.getMarca().getNombre());
+        }
+        CategoriaDTO categoriaDTO = null;
+        if (p.getCategoria() != null) {
+            categoriaDTO = new CategoriaDTO(p.getCategoria().getId(), p.getCategoria().getNombre());
+        }
+        return ProductoDTO.builder()
+                .id(p.getId())
+                .nombre(p.getNombre())
+                .descripcion(p.getDescripcion())
+                .precioUnitario(p.getPrecioUnitario())
+                .imagenUrl(p.getImagenUrl())
+                .marcaDTO(marcaDTO)
+                .categoriaDTO(categoriaDTO)
+                .build();
+    }
+
+    private Producto mapToEntity(ProductoDTO dto) {
+        Producto p = new Producto();
+        p.setId(dto.getId());
+        p.setNombre(dto.getNombre());
+        p.setDescripcion(dto.getDescripcion());
+        p.setPrecioUnitario(dto.getPrecioUnitario());
+        p.setImagenUrl(dto.getImagenUrl());
+
+        if (dto.getMarcaDTO() != null) {
+            Optional<Marca> marcaOpt = marcaRepository.findById(dto.getMarcaDTO().getId());
+            marcaOpt.ifPresent(p::setMarca);
+        }
+        if (dto.getCategoriaDTO() != null) {
+            Optional<Categoria> catOpt = categoriaRepository.findById(dto.getCategoriaDTO().getId());
+            catOpt.ifPresent(p::setCategoria);
+        }
+        return p;
+    }
+
+    /* =================== CRUD =================== */
+
+    public List<ProductoDTO> listar() {
+        return productoRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public ProductoDTO findById(Long id) {
-        Producto producto = productoRepository.findById(id).orElse(null);
-        if (producto == null) return null;
-        return convertToDTO(producto);
+    public ProductoDTO obtenerPorId(Long id) {
+        return productoRepository.findById(id)
+                .map(this::mapToDTO)
+                .orElse(null);
     }
 
-    @Transactional(readOnly = true)
-    public ProductoDTO findByNombre(String nombre) {
-        Producto producto = productoRepository.findByNombre(nombre);
-        if (producto == null) return null;
-        return convertToDTO(producto);
+    public ProductoDTO crear(ProductoDTO dto, MultipartFile imagen) {
+        Producto p = mapToEntity(dto);
+        String fileName = saveFile(imagen);
+        if (fileName != null) {
+            p.setImagenUrl(fileName);
+        }
+        Producto guardado = productoRepository.save(p);
+        return mapToDTO(guardado);
     }
 
-    @Transactional
-    public ProductoDTO save(ProductoDTO dto, MultipartFile imagen) {
-        Producto producto = new Producto();
-        if (dto.getId() != null) producto.setId(dto.getId());
-        producto.setNombre(dto.getNombre());
-        producto.setDescripcion(dto.getDescripcion());
-        producto.setPrecioUnitario(dto.getPrecioUnitario());
+    public ProductoDTO actualizar(Long id, ProductoDTO dto, MultipartFile imagen) {
+        return productoRepository.findById(id).map(p -> {
+            p.setNombre(dto.getNombre());
+            p.setDescripcion(dto.getDescripcion());
+            p.setPrecioUnitario(dto.getPrecioUnitario());
 
-        // Manejo de imagen
-        if (imagen != null && !imagen.isEmpty()) {
-            String nombreArchivo = UUID.randomUUID() + "_" + imagen.getOriginalFilename();
-            try {
-                File uploadDir = new File(UPLOAD_DIR);
-                if (!uploadDir.exists()) uploadDir.mkdirs();
-                imagen.transferTo(new File(UPLOAD_DIR + nombreArchivo));
-                producto.setImagenUrl(nombreArchivo);
-            } catch (IOException e) {
-                throw new RuntimeException("Error al guardar la imagen", e);
+            if (dto.getMarcaDTO() != null) {
+                marcaRepository.findById(dto.getMarcaDTO().getId()).ifPresent(p::setMarca);
+            } else {
+                p.setMarca(null);
             }
-        } else {
-            producto.setImagenUrl(dto.getImagenUrl());
-        }
 
-        Marca marca = null;
-        if (dto.getMarca() != null && dto.getMarca().getId() != null) {
-            marca = marcaRepository.findById(dto.getMarca().getId()).orElse(null);
-        }
-        producto.setMarca(marca);
+            if (dto.getCategoriaDTO() != null) {
+                categoriaRepository.findById(dto.getCategoriaDTO().getId()).ifPresent(p::setCategoria);
+            } else {
+                p.setCategoria(null);
+            }
 
-        Categoria categoria = null;
-        if (dto.getCategoria() != null && dto.getCategoria().getId() != null) {
-            categoria = categoriaRepository.findById(dto.getCategoria().getId()).orElse(null);
-        }
-        producto.setCategoria(categoria);
+            String oldImage = p.getImagenUrl();
 
-        return convertToDTO(productoRepository.save(producto));
+            // A) Subieron una nueva imagen => guarda nueva y borra la vieja
+            if (imagen != null && !imagen.isEmpty()) {
+                String newFile = saveFile(imagen);
+                if (newFile != null) {
+                    p.setImagenUrl(newFile);
+                    deleteFileSafe(oldImage);
+                }
+            } else {
+                // B) No suben archivo, pero pidieron quitar la imagen (dto.imagenUrl == null)
+                if (dto.getImagenUrl() == null && oldImage != null) {
+                    deleteFileSafe(oldImage);
+                    p.setImagenUrl(null);
+                }
+                // C) Si dto.imagenUrl trae algo (mantener), no hacemos nada
+            }
+
+            return mapToDTO(productoRepository.save(p));
+        }).orElse(null);
     }
 
-    @Transactional
-    public void delete(Long id) {
-        productoRepository.deleteById(id);
-    }
-
-    private ProductoDTO convertToDTO(Producto producto) {
-        MarcaDTO marcaDTO = null;
-        if (producto.getMarca() != null) {
-            marcaDTO = MarcaDTO.builder()
-                    .id(producto.getMarca().getId())
-                    .nombre(producto.getMarca().getNombre())
-                    .build();
-        }
-        CategoriaDTO categoriaDTO = null;
-        if (producto.getCategoria() != null) {
-            categoriaDTO = CategoriaDTO.builder()
-                    .id(producto.getCategoria().getId())
-                    .nombre(producto.getCategoria().getNombre())
-                    .build();
-        }
-        return new ProductoDTO(
-                producto.getId(),
-                producto.getNombre(),
-                producto.getDescripcion(),
-                producto.getPrecioUnitario(),
-                producto.getImagenUrl(),
-                marcaDTO,
-                categoriaDTO
-        );
+    public void eliminar(Long id) {
+        productoRepository.findById(id).ifPresent(p -> {
+            deleteFileSafe(p.getImagenUrl());
+            productoRepository.deleteById(id);
+        });
     }
 }
