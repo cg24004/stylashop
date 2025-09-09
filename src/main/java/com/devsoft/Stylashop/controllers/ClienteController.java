@@ -1,70 +1,54 @@
 package com.devsoft.Stylashop.controllers;
 
-import com.devsoft.Stylashop.dto.CategoriaDTO;
 import com.devsoft.Stylashop.dto.ClienteDTO;
-import com.devsoft.Stylashop.interfaces.IClienteService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.http.HttpStatus;
+import com.devsoft.Stylashop.services.ClienteService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/api/clientes")
+@RequiredArgsConstructor
 public class ClienteController {
 
-    @Autowired
-    private IClienteService clienteService;
+    private final ClienteService clienteService;
 
-    //Endpoint para obtener todos los clientes
-    @GetMapping("/clientes")
-    public ResponseEntity<?> getAll() {
-        List<ClienteDTO> clDtoList = clienteService.findAll();
-        return ResponseEntity.ok(clDtoList);
+    @GetMapping
+    public ResponseEntity<List<ClienteDTO>> listar(){
+        return ResponseEntity.ok(clienteService.listar());
     }
 
-    //Endpoint para obtener un cliente por ID
-    @GetMapping("/clientes/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) {
-        ClienteDTO clDTO = null;
-        Map<String, Object> response = new HashMap<>();
-        try {
-            clDTO = clienteService.findById(id);
-        } catch (DataAccessException e) {
-            response.put("message", "Error al realizar la consulta a la base de datos");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        if (clDTO == null) {
-            response.put("message", "La cliente con ID: "
-                    .concat(id.toString().concat(" no existe en la base de datos")));
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<ClienteDTO>(clDTO, HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<ClienteDTO> obtener(@PathVariable Long id){
+        ClienteDTO dto = clienteService.obtenerPorId(id);
+        return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
-    //Endpoint para obtener un cliente por nombre
-    @GetMapping("/clientes/nombre/{nombre}")
-    public ResponseEntity<?> getByNombre(@PathVariable String nombre) {
-        ClienteDTO clDTO = null;
-        Map<String, Object> response = new HashMap<>();
-        try {
-            clDTO = clienteService.findByNombre(nombre);
-        } catch (DataAccessException e) {
-            response.put("message", "Error al realizar la consulta a la base de datos");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        if (clDTO == null) {
-            response.put("message", "El cliente con nombre: "
-                    .concat(nombre.toString().concat(" no existe en la base de datos")));
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<ClienteDTO>(clDTO, HttpStatus.OK);
+    @PostMapping
+    public ResponseEntity<?> crear(@RequestBody ClienteDTO dto){
+        ClienteDTO creado = clienteService.crear(dto);
+        return ResponseEntity.status(201).body(Map.of(
+                "message", "Cliente creado correctamente",
+                "cliente", creado
+        ));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody ClienteDTO dto){
+        ClienteDTO act = clienteService.actualizar(id, dto);
+        if (act == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(Map.of(
+                "message", "Cliente actualizado correctamente",
+                "cliente", act
+        ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminar(@PathVariable Long id){
+        clienteService.eliminar(id);
+        return ResponseEntity.ok(Map.of("message", "Cliente eliminado correctamente"));
     }
 }

@@ -17,12 +17,12 @@ public class ProductoMapper {
                 .descripcion(producto.getDescripcion())
                 .precioUnitario(producto.getPrecioUnitario())
                 .imagenUrl(producto.getImagenUrl())
-                .marca(producto.getMarca() == null ? null :
+                .marcaDTO(producto.getMarca() == null ? null :
                         MarcaDTO.builder()
                                 .id(producto.getMarca().getId())
                                 .nombre(producto.getMarca().getNombre())
                                 .build())
-                .categoria(producto.getCategoria() == null ? null :
+                .categoriaDTO(producto.getCategoria() == null ? null :
                         CategoriaDTO.builder()
                                 .id(producto.getCategoria().getId())
                                 .nombre(producto.getCategoria().getNombre())

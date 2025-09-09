@@ -2,50 +2,63 @@ package com.devsoft.Stylashop.services;
 
 import com.devsoft.Stylashop.dto.ClienteDTO;
 import com.devsoft.Stylashop.entities.Cliente;
-import com.devsoft.Stylashop.interfaces.IClienteService;
 import com.devsoft.Stylashop.repository.ClienteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ClienteService implements IClienteService {
+@RequiredArgsConstructor
+public class ClienteService {
 
-    @Autowired
-    private ClienteRepository clienteRepository;
+    private final ClienteRepository clienteRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ClienteDTO> findAll() {
-        return clienteRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    private ClienteDTO toDTO(Cliente c){
+        return ClienteDTO.builder()
+                .id(c.getId())
+                .nombre(c.getNombre())
+                .email(c.getEmail())
+                .telefono(c.getTelefono())
+                .tipoCliente(c.getTipoCliente())
+                .build();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ClienteDTO findById(Long id) {
-        Cliente cl = clienteRepository.findById(id).orElse(null);
-        if (cl == null) return null;
-        return convertToDTO(cl);
+    private Cliente toEntity(ClienteDTO dto){
+        Cliente c = new Cliente();
+        c.setId(dto.getId());
+        c.setNombre(dto.getNombre());
+        c.setEmail(dto.getEmail());
+        c.setTelefono(dto.getTelefono());
+        c.setTipoCliente(dto.getTipoCliente());
+        return c;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ClienteDTO findByNombre(String nombre) {
-        Cliente cl = clienteRepository.findByNombre(nombre);
-        if (cl == null) return null;
-        return convertToDTO(cl);
+    public List<ClienteDTO> listar(){
+        return clienteRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    private ClienteDTO convertToDTO(Cliente cl) {
-        return new ClienteDTO(cl.getId(),
-                cl.getNombre(),
-                cl.getEmail(),
-                cl.getTelefono(),
-                cl.getTipoCliente());
+    public ClienteDTO obtenerPorId(Long id){
+        return clienteRepository.findById(id).map(this::toDTO).orElse(null);
+    }
+
+    public ClienteDTO crear(ClienteDTO dto){
+        Cliente guardado = clienteRepository.save(toEntity(dto));
+        return toDTO(guardado);
+    }
+
+    public ClienteDTO actualizar(Long id, ClienteDTO dto){
+        return clienteRepository.findById(id).map(c -> {
+            c.setNombre(dto.getNombre());
+            c.setEmail(dto.getEmail());
+            c.setTelefono(dto.getTelefono());
+            c.setTipoCliente(dto.getTipoCliente());
+            return toDTO(clienteRepository.save(c));
+        }).orElse(null);
+    }
+
+    public void eliminar(Long id){
+        clienteRepository.deleteById(id);
     }
 }
