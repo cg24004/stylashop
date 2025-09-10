@@ -1,5 +1,6 @@
 package com.devsoft.Stylashop.dto;
 
+import com.devsoft.Stylashop.utils.EstadoVenta;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,10 +17,13 @@ import java.util.List;
 @Builder
 public class VentaDTO {
     private Long id;
-    private LocalDate fecha;
-    private LocalTime hora;
+    private String correlativo;
+    private String fecha;
+    private String hora;
+    private String estado;
     private BigDecimal total;
-    private Long usuarioId;
-    private List<DetalleVentaDTO> detalles;
+    private ClienteDTO clienteDTO;
+    private UsuarioDTO usuarioDTO; // Cambió de usuarioId a usuarioDTO
+    private List<DetalleVentaDTO> detallesVenta; // Cambió de detalles a detallesVenta
 }
 

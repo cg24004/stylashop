@@ -34,11 +34,19 @@ public class UsuarioService implements IUsuarioService {
         return convertToDTO(user);
     }
 
-    private UsuarioDTO convertToDTO(Usuario user){
-        return new UsuarioDTO(
-            user.getId(),
-            user.getPassword(),
-            user.getRole() != null ? user.getRole().getId() : null
-        );
+    private UsuarioDTO convertToDTO(Usuario user) {
+        if (user == null) return null;
+
+        return UsuarioDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .roleDTO(user.getRole() != null
+                        ? RoleDTO.builder()
+                        .id(user.getRole().getId())
+                        .nombre(user.getRole().getNombre())
+                        .build()
+                        : null)
+                .build();
     }
 }
