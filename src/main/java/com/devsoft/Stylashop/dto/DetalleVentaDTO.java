@@ -16,6 +16,6 @@ public class DetalleVentaDTO {
     private Integer cantidad;
     private BigDecimal precio;
     private BigDecimal subtotal;
-    private Long productoId;
+    private ProductoDTO productoDTO; // Cambió de productoId a productoDTO
 }
 
