@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.devsoft</groupId>
-	<artifactId>orders-api</artifactId>
+	<artifactId>StylaShop</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>orders-api</name>
-	<description>API de gestión de órdenes para restaurantes.</description>
+	<description>API de gestión de órdenes para tienda de ropa</description>
 	<url/>
 	<licenses>
 		<license/>
